@@ -2,7 +2,7 @@ name: Daily Album Update
 
 on:
   schedule:
-    - cron: "5 0 * * *"   # täglich 00:05 UTC
+    - cron: "55 23 * * *"
   workflow_dispatch:
 
 jobs:
@@ -18,18 +18,18 @@ jobs:
           ALBUM_FILE="album.json"
 
           if [ ! -f "$BACKLOG_FILE" ]; then
-            echo "❌ album-backlog.json not found"
+            echo "album-backlog.json not found"
             exit 1
           fi
 
           NEXT_ALBUM_ID=$(jq -r '.albums[0]' "$BACKLOG_FILE")
 
           if [ "$NEXT_ALBUM_ID" = "null" ] || [ -z "$NEXT_ALBUM_ID" ]; then
-            echo "❌ Backlog is empty"
+            echo "Backlog is empty"
             exit 1
           fi
 
-          echo "🎵 Next album ID: $NEXT_ALBUM_ID"
+          echo "Next album ID: $NEXT_ALBUM_ID"
           echo "{ \"albumId\": \"$NEXT_ALBUM_ID\" }" > "$ALBUM_FILE"
 
           jq '.albums |= .[1:]' "$BACKLOG_FILE" > tmp.json
@@ -41,5 +41,5 @@ jobs:
           git config user.email "album-bot@users.noreply.github.com"
 
           git add album.json album-backlog.json
-          git commit -m "🎧 Daily album update"
+          git commit -m "Daily album update"
           git push
