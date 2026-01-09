@@ -1,8 +1,4 @@
 {
-  "date": "2026-01-09",
-  "album": {
-    "id": "1561345678",
-    "title": "Wish You Were Here",
-    "artist": "Pink Floyd"
-  }
+  "date": "2025-01-09",
+  "albumId": "1561345678"
 }
