@@ -12,8 +12,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Read backlog and update album.json
+      - name: Read backlog and update album.json (random pick)
         run: |
+          set -euo pipefail
+
           BACKLOG_FILE="album-backlog.json"
           ALBUM_FILE="album.json"
 
@@ -22,17 +24,28 @@ jobs:
             exit 1
           fi
 
-          NEXT_ALBUM_ID=$(jq -r '.albums[0]' "$BACKLOG_FILE")
-
-          if [ "$NEXT_ALBUM_ID" = "null" ] || [ -z "$NEXT_ALBUM_ID" ]; then
+          COUNT=$(jq '.albums | length' "$BACKLOG_FILE")
+          if [ "$COUNT" -eq 0 ]; then
             echo "Backlog is empty"
             exit 1
           fi
 
+          # Random index in [0, COUNT-1]
+          RAND_INDEX=$(( RANDOM % COUNT ))
+
+          NEXT_ALBUM_ID=$(jq -r ".albums[$RAND_INDEX]" "$BACKLOG_FILE")
+          if [ "$NEXT_ALBUM_ID" = "null" ] || [ -z "$NEXT_ALBUM_ID" ]; then
+            echo "Failed to select album ID"
+            exit 1
+          fi
+
+          echo "Selected random index: $RAND_INDEX / $COUNT"
           echo "Next album ID: $NEXT_ALBUM_ID"
+
           echo "{ \"albumId\": \"$NEXT_ALBUM_ID\" }" > "$ALBUM_FILE"
 
-          jq '.albums |= .[1:]' "$BACKLOG_FILE" > tmp.json
+          # Remove the selected element
+          jq "del(.albums[$RAND_INDEX])" "$BACKLOG_FILE" > tmp.json
           mv tmp.json "$BACKLOG_FILE"
 
       - name: Commit and push changes
@@ -41,5 +54,5 @@ jobs:
           git config user.email "album-bot@users.noreply.github.com"
 
           git add album.json album-backlog.json
-          git commit -m "Daily album update"
+          git commit -m "Daily album update" || echo "Nothing to commit"
           git push
